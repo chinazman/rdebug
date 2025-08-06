@@ -1,0 +1,37 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model ErrorLog {
+  id        String   @id @default(cuid())
+  url       String
+  message   String
+  stack     String?
+  userAgent String
+  timestamp DateTime @default(now())
+  sessionId String
+
+  @@index([timestamp])
+  @@index([sessionId])
+}
+
+model DomSnapshot {
+  id           String   @id @default(cuid())
+  url          String
+  domStructure String
+  userAgent    String
+  timestamp    DateTime @default(now())
+  sessionId    String
+  clickCount   Int
+
+  @@index([timestamp])
+  @@index([sessionId])
+} 
