@@ -9,7 +9,13 @@
     "lint": "next lint",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "version:patch": "npm version patch && git push && git push --tags",
+    "version:minor": "npm version minor && git push && git push --tags",
+    "version:major": "npm version major && git push && git push --tags",
+    "docker:build": "docker build -t rdebug .",
+    "docker:run": "docker run -p 3000:3000 rdebug",
+    "docker:push": "docker tag rdebug $DOCKER_USERNAME/rdebug:latest && docker push $DOCKER_USERNAME/rdebug:latest"
   },
   "dependencies": {
     "next": "14.0.4",
