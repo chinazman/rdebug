@@ -5,6 +5,13 @@ const nextConfig = {
   experimental: {
     outputFileTracingRoot: undefined,
   },
+  // 确保TypeScript路径映射正确工作
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+  eslint: {
+    ignoreDuringBuilds: false,
+  },
 }
 
 module.exports = nextConfig 

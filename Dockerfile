@@ -9,16 +9,23 @@ WORKDIR /app
 
 # 安装依赖
 COPY package.json package-lock.json* ./
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci && npm cache clean --force
 
 # 构建阶段
 FROM base AS builder
 WORKDIR /app
+
+# 复制依赖
 COPY --from=deps /app/node_modules ./node_modules
+
+# 复制所有源代码
 COPY . .
 
 # 生成Prisma客户端
 RUN npx prisma generate
+
+# 确保TypeScript配置正确
+RUN npx tsc --noEmit
 
 # 构建应用
 RUN npm run build
