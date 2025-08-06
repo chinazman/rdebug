@@ -9,7 +9,9 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=${DATABASE_URL}
+      - DATABASE_URL=mysql://root:password@db:3306/rdebug
+    depends_on:
+      - db
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
@@ -18,18 +20,20 @@ services:
       retries: 3
       start_period: 40s
 
-  # 如果需要数据库，可以取消注释以下部分
-  # db:
-  #   image: postgres:15-alpine
-  #   environment:
-  #     POSTGRES_DB: rdebug
-  #     POSTGRES_USER: postgres
-  #     POSTGRES_PASSWORD: password
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #   ports:
-  #     - "5432:5432"
-  #   restart: unless-stopped
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: rdebug
+      MYSQL_USER: rdebug
+      MYSQL_PASSWORD: password
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./scripts/init-mysql.sql:/docker-entrypoint-initdb.d/init-mysql.sql
+    ports:
+      - "3306:3306"
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
 
 volumes:
-  postgres_data: 
+  mysql_data: 

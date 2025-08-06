@@ -35,10 +35,10 @@ export async function GET(request: NextRequest) {
       });
       
       if (!response.ok) {
-        console.error('RDebug: 发送数据失败', response.status);
+        console.info('RDebug: 发送数据失败', response.status);
       }
     } catch (error) {
-      console.error('RDebug: 发送数据错误', error);
+      console.info('RDebug: 发送数据错误', error);
     }
   }
   

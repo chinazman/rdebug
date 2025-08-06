@@ -1,0 +1,6 @@
+-- 给rdebug用户创建数据库的权限
+GRANT ALL PRIVILEGES ON *.* TO 'rdebug'@'%' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
+
+-- 刷新权限
+FLUSH PRIVILEGES; 
