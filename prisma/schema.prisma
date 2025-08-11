@@ -15,7 +15,7 @@ model ErrorLog {
   url       String
   message   String   @db.MediumText
   stack     String?  @db.MediumText
-  userAgent String
+  userAgent String   @db.Text
   timestamp DateTime @default(now())
   sessionId String
 
@@ -27,7 +27,7 @@ model DomSnapshot {
   id           String   @id @default(cuid())
   url          String
   domStructure String   @db.MediumText
-  userAgent    String
+  userAgent    String   @db.Text
   timestamp    DateTime @default(now())
   sessionId    String
   clickCount   Int
@@ -48,7 +48,7 @@ model NetworkRequest {
   requestBody    String?  @db.MediumText
   responseBody   String?  @db.MediumText
   error          String?  @db.MediumText
-  userAgent      String
+  userAgent      String   @db.Text
   sessionId      String
   timestamp      DateTime @default(now())
 
