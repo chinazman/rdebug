@@ -1,137 +1,129 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useCallback, useEffect } from 'react'
+import Script from 'next/script'
 
 export default function TestPage() {
-  const [testResults, setTestResults] = useState<string[]>([]);
+  const triggerError = useCallback(() => {
+    // 与 test.html 保持一致：故意触发未定义变量错误
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    (window as any).undefinedVariable.someMethod()
+  }, [])
 
-  const addResult = (message: string) => {
-    setTestResults(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
-  };
+  const triggerWarning = useCallback(() => {
+    console.warn('这是一个警告信息')
+    console.warn('浏览器不支持某些特性')
+    console.warn('建议使用现代浏览器')
+  }, [])
 
-  const testFetch = async () => {
+  const logInfo = useCallback(() => {
+    console.log('这是一条普通信息')
+    console.info('vConsole 工作正常')
+    console.log('当前时间:', new Date().toLocaleString())
+    console.log('用户代理:', navigator.userAgent)
+  }, [])
+
+  const requestSuccess = useCallback(async () => {
+    console.log('开始请求成功接口...')
     try {
-      addResult('开始测试fetch请求...');
-      const response = await fetch('https://jsonplaceholder.typicode.com/posts/1');
-      const data = await response.json();
-      addResult(`Fetch成功: ${data.title}`);
+      const response = await fetch('https://jsonplaceholder.typicode.com/todos/1')
+      console.log('响应状态:', response.status, response.statusText)
+      const data = await response.json()
+      console.log('成功数据:', data)
     } catch (error) {
-      addResult(`Fetch失败: ${error}`);
+      console.error('请求成功接口时发生网络错误:', error)
     }
-  };
+  }, [])
 
-  const testXHR = () => {
-    addResult('开始测试XMLHttpRequest...');
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', 'https://jsonplaceholder.typicode.com/posts/2');
-    xhr.onload = function() {
-      if (xhr.status === 200) {
-        const data = JSON.parse(xhr.responseText);
-        addResult(`XHR成功: ${data.title}`);
-      } else {
-        addResult(`XHR失败: ${xhr.status}`);
+  const requestFail = useCallback(async () => {
+    console.log('开始请求失败接口...')
+    try {
+      const response = await fetch('https://jsonplaceholder.typicode.com/invalid-endpoint')
+      console.log('响应状态:', response.status, response.statusText)
+      if (!response.ok) {
+        const text = await response.text().catch(() => '')
+        throw new Error(`HTTP错误: ${response.status} ${response.statusText}${text ? ' - ' + text : ''}`)
       }
-    };
-    xhr.onerror = function() {
-      addResult('XHR网络错误');
-    };
-    xhr.send();
-  };
-
-  const testErrorRequest = async () => {
-    try {
-      addResult('开始测试错误请求...');
-      await fetch('https://httpstat.us/404');
-      addResult('404请求完成');
+      const data = await response.json()
+      console.log('意外成功数据:', data)
     } catch (error) {
-      addResult(`错误请求失败: ${error}`);
+      console.error('失败请求捕获到错误:', error)
     }
-  };
+  }, [])
 
-  const testSlowRequest = async () => {
-    try {
-      addResult('开始测试慢请求...');
-      await fetch('https://httpstat.us/200?sleep=2000');
-      addResult('慢请求完成');
-    } catch (error) {
-      addResult(`慢请求失败: ${error}`);
-    }
-  };
-
-  const clearResults = () => {
-    setTestResults([]);
-  };
+  useEffect(() => {
+    console.log('页面加载完成，vConsole 已初始化')
+    console.log('点击右下角的 vConsole 图标打开调试面板')
+  }, [])
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">RDebug 测试页面</h1>
-        <p className="text-gray-600">测试各种网络请求的捕获功能</p>
+    <div className="page-wrapper">
+      {/* 与 test.html 中 script 一致，保留 serverUrl 参数 */}
+      <Script src="http://localhost:3000/api/script?serverUrl=http%3A%2F%2Flocalhost%3A3000" strategy="afterInteractive" />
+
+      <div className="container">
+        <h1>测试页面</h1>
+        <div className="button-group">
+          <button className="error-btn" onClick={triggerError}>触发 JavaScript 错误</button>
+          <button className="warning-btn" onClick={triggerWarning}>触发警告信息</button>
+          <button className="info-btn" onClick={logInfo}>输出普通信息</button>
+          <button className="success-btn" onClick={requestSuccess}>请求接口成功</button>
+          <button className="fail-btn" onClick={requestFail}>请求接口失败</button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>网络请求测试</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Button onClick={testFetch} className="w-full">
-              测试 Fetch 请求
-            </Button>
-            <Button onClick={testXHR} className="w-full">
-              测试 XMLHttpRequest
-            </Button>
-            <Button onClick={testErrorRequest} className="w-full">
-              测试错误请求 (404)
-            </Button>
-            <Button onClick={testSlowRequest} className="w-full">
-              测试慢请求 (2秒)
-            </Button>
-            <Button onClick={clearResults} variant="outline" className="w-full">
-              清空结果
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>测试结果</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64 overflow-y-auto bg-gray-50 p-4 rounded">
-              {testResults.length === 0 ? (
-                <p className="text-gray-500">暂无测试结果</p>
-              ) : (
-                <div className="space-y-1">
-                  {testResults.map((result, index) => (
-                    <div key={index} className="text-sm font-mono">
-                      {result}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="mt-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>使用说明</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 text-sm">
-              <p>1. 点击上方按钮测试不同类型的网络请求</p>
-              <p>2. 所有请求都会被RDebug脚本捕获并发送到服务器</p>
-              <p>3. 可以在 <a href="/network-requests" className="text-blue-600 hover:underline">网络请求页面</a> 查看捕获的数据</p>
-              <p>4. 注意：发送到 /api/ 的请求会被自动排除，避免循环</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <style jsx>{`
+        .page-wrapper {
+          display: flex;
+          min-height: calc(100dvh - var(--app-header-offset, 0px));
+          background-color: #f5f5f5;
+          font-family: Arial, sans-serif;
+        }
+        .container {
+          background: #ffffff;
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 30px;
+          border-radius: 10px;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          align-self: center;
+          width: 100%;
+        }
+        h1 {
+          color: #333;
+          text-align: center;
+          margin-bottom: 30px;
+        }
+        .button-group {
+          display: flex;
+          flex-direction: column;
+          gap: 15px;
+          margin-top: 30px;
+        }
+        button {
+          padding: 15px 25px;
+          font-size: 16px;
+          border: none;
+          border-radius: 5px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          color: #fff;
+        }
+        .error-btn { background-color: #ff4757; }
+        .error-btn:hover { background-color: #ff3742; transform: translateY(-2px); }
+        .info-btn { background-color: #2ed573; }
+        .info-btn:hover { background-color: #26d0ce; transform: translateY(-2px); }
+        .warning-btn { background-color: #ffa502; }
+        .warning-btn:hover { background-color: #ff9500; transform: translateY(-2px); }
+        .success-btn { background-color: #1e90ff; }
+        .success-btn:hover { background-color: #187bcd; transform: translateY(-2px); }
+        .fail-btn { background-color: #e84393; }
+        .fail-btn:hover { background-color: #d63384; transform: translateY(-2px); }
+      `}</style>
     </div>
-  );
-} 
+  )
+}
+
+
