@@ -41,6 +41,11 @@ export async function GET(request: NextRequest) {
       console.info('RDebug: 发送数据错误', error);
     }
   }
+
+  // 发送网络请求数据
+  function sendNetworkRequest(networkData) {
+    sendData('/api/network-requests', networkData);
+  }
   
   // 发送异常数据
   function sendError(error) {
@@ -101,6 +106,154 @@ export async function GET(request: NextRequest) {
   console.error = function(...args) {
     originalConsoleError.apply(console, args);
     sendError(new Error(args.join(' ')));
+  };
+
+  // 拦截XMLHttpRequest
+  const originalXHROpen = XMLHttpRequest.prototype.open;
+  const originalXHRSend = XMLHttpRequest.prototype.send;
+  
+  XMLHttpRequest.prototype.open = function(method, url, ...args) {
+    this._rdebugMethod = method;
+    this._rdebugUrl = url;
+    this._rdebugStartTime = Date.now();
+    return originalXHROpen.apply(this, [method, url, ...args]);
+  };
+  
+  XMLHttpRequest.prototype.send = function(data) {
+    const xhr = this;
+    const startTime = xhr._rdebugStartTime;
+    
+    // 检查是否是sendData请求，如果是则跳过
+    if (xhr._rdebugUrl && xhr._rdebugUrl.includes(config.serverUrl)) {
+      return originalXHRSend.apply(this, arguments);
+    }
+    
+    xhr.addEventListener('load', function() {
+      const endTime = Date.now();
+      const responseTime = endTime - startTime;
+      
+      try {
+        const networkData = {
+          url: xhr._rdebugUrl,
+          method: xhr._rdebugMethod,
+          status: xhr.status,
+          statusText: xhr.statusText,
+          responseTime: responseTime,
+          requestHeaders: xhr.getAllResponseHeaders(),
+          responseHeaders: xhr.getAllResponseHeaders(),
+          requestBody: data,
+          responseBody: xhr.responseText,
+          error: null,
+          userAgent: navigator.userAgent,
+          sessionId: config.sessionId
+        };
+        
+        sendNetworkRequest(networkData);
+      } catch (error) {
+        console.error('RDebug: 记录网络请求失败', error);
+      }
+    });
+    
+    xhr.addEventListener('error', function() {
+      const endTime = Date.now();
+      const responseTime = endTime - startTime;
+      
+      try {
+        const networkData = {
+          url: xhr._rdebugUrl,
+          method: xhr._rdebugMethod,
+          status: null,
+          statusText: null,
+          responseTime: responseTime,
+          requestHeaders: null,
+          responseHeaders: null,
+          requestBody: data,
+          responseBody: null,
+          error: 'Network Error',
+          userAgent: navigator.userAgent,
+          sessionId: config.sessionId
+        };
+        
+        sendNetworkRequest(networkData);
+      } catch (error) {
+        console.error('RDebug: 记录网络请求失败', error);
+      }
+    });
+    
+    return originalXHRSend.apply(this, arguments);
+  };
+
+  // 拦截fetch
+  const originalFetch = window.fetch;
+  window.fetch = function(url, options = {}) {
+    const startTime = Date.now();
+    const method = options.method || 'GET';
+    
+    // 检查是否是sendData请求，如果是则跳过
+    if (typeof url === 'string' && url.includes(config.serverUrl)) {
+      return originalFetch.apply(this, arguments);
+    }
+    
+    return originalFetch.apply(this, arguments)
+      .then(response => {
+        const endTime = Date.now();
+        const responseTime = endTime - startTime;
+        
+        // 克隆response以便读取body
+        const responseClone = response.clone();
+        
+        responseClone.text().then(responseText => {
+          try {
+            const networkData = {
+              url: typeof url === 'string' ? url : url.toString(),
+              method: method,
+              status: response.status,
+              statusText: response.statusText,
+              responseTime: responseTime,
+              requestHeaders: JSON.stringify(options.headers || {}),
+              responseHeaders: JSON.stringify([...response.headers.entries()]),
+              requestBody: options.body || null,
+              responseBody: responseText,
+              error: null,
+              userAgent: navigator.userAgent,
+              sessionId: config.sessionId
+            };
+            
+            sendNetworkRequest(networkData);
+          } catch (error) {
+            console.error('RDebug: 记录网络请求失败', error);
+          }
+        });
+        
+        return response;
+      })
+      .catch(error => {
+        const endTime = Date.now();
+        const responseTime = endTime - startTime;
+        
+        try {
+          const networkData = {
+            url: typeof url === 'string' ? url : url.toString(),
+            method: method,
+            status: null,
+            statusText: null,
+            responseTime: responseTime,
+            requestHeaders: JSON.stringify(options.headers || {}),
+            responseHeaders: null,
+            requestBody: options.body || null,
+            responseBody: null,
+            error: error.message || 'Fetch Error',
+            userAgent: navigator.userAgent,
+            sessionId: config.sessionId
+          };
+          
+          sendNetworkRequest(networkData);
+        } catch (recordError) {
+          console.error('RDebug: 记录网络请求失败', recordError);
+        }
+        
+        throw error;
+      });
   };
   
   console.log('RDebug: 埋点脚本已加载');

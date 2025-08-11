@@ -1,142 +1,133 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, MousePointer, Code } from 'lucide-react';
 
 export default function TestPage() {
-  const [clickCount, setClickCount] = useState(0);
-  const [lastClickTime, setLastClickTime] = useState(0);
+  const [testResults, setTestResults] = useState<string[]>([]);
 
-  const triggerError = () => {
-    throw new Error('这是一个测试异常');
+  const addResult = (message: string) => {
+    setTestResults(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
   };
 
-  const triggerPromiseError = () => {
-    Promise.reject(new Error('这是一个Promise拒绝测试'));
-  };
-
-  const handleClick = () => {
-    const now = Date.now();
-    const timeDiff = now - lastClickTime;
-    
-    if (timeDiff <= 2000) {
-      setClickCount(prev => prev + 1);
-    } else {
-      setClickCount(1);
+  const testFetch = async () => {
+    try {
+      addResult('开始测试fetch请求...');
+      const response = await fetch('https://jsonplaceholder.typicode.com/posts/1');
+      const data = await response.json();
+      addResult(`Fetch成功: ${data.title}`);
+    } catch (error) {
+      addResult(`Fetch失败: ${error}`);
     }
-    
-    setLastClickTime(now);
+  };
+
+  const testXHR = () => {
+    addResult('开始测试XMLHttpRequest...');
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', 'https://jsonplaceholder.typicode.com/posts/2');
+    xhr.onload = function() {
+      if (xhr.status === 200) {
+        const data = JSON.parse(xhr.responseText);
+        addResult(`XHR成功: ${data.title}`);
+      } else {
+        addResult(`XHR失败: ${xhr.status}`);
+      }
+    };
+    xhr.onerror = function() {
+      addResult('XHR网络错误');
+    };
+    xhr.send();
+  };
+
+  const testErrorRequest = async () => {
+    try {
+      addResult('开始测试错误请求...');
+      await fetch('https://httpstat.us/404');
+      addResult('404请求完成');
+    } catch (error) {
+      addResult(`错误请求失败: ${error}`);
+    }
+  };
+
+  const testSlowRequest = async () => {
+    try {
+      addResult('开始测试慢请求...');
+      await fetch('https://httpstat.us/200?sleep=2000');
+      addResult('慢请求完成');
+    } catch (error) {
+      addResult(`慢请求失败: ${error}`);
+    }
+  };
+
+  const clearResults = () => {
+    setTestResults([]);
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">RDebug 功能测试页面</h1>
-        <p className="text-muted-foreground">
-          这个页面用于测试埋点脚本的功能。请确保已经集成了埋点脚本。
-        </p>
+    <div className="container mx-auto p-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold mb-2">RDebug 测试页面</h1>
+        <p className="text-gray-600">测试各种网络请求的捕获功能</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-              异常测试
-            </CardTitle>
-            <CardDescription>
-              测试JavaScript异常捕获功能
-            </CardDescription>
+            <CardTitle>网络请求测试</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button 
-              onClick={triggerError}
-              variant="destructive"
-              className="w-full"
-            >
-              触发JavaScript异常
+            <Button onClick={testFetch} className="w-full">
+              测试 Fetch 请求
             </Button>
-            
-            <Button 
-              onClick={triggerPromiseError}
-              variant="outline"
-              className="w-full"
-            >
-              触发Promise拒绝
+            <Button onClick={testXHR} className="w-full">
+              测试 XMLHttpRequest
+            </Button>
+            <Button onClick={testErrorRequest} className="w-full">
+              测试错误请求 (404)
+            </Button>
+            <Button onClick={testSlowRequest} className="w-full">
+              测试慢请求 (2秒)
+            </Button>
+            <Button onClick={clearResults} variant="outline" className="w-full">
+              清空结果
             </Button>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MousePointer className="h-5 w-5 text-primary" />
-              快速点击测试
-            </CardTitle>
-            <CardDescription>
-              测试2秒内点击3次触发DOM快照
-            </CardDescription>
+            <CardTitle>测试结果</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <Button 
-              onClick={handleClick}
-              className="w-full"
-            >
-              点击我 ({clickCount}/3)
-            </Button>
-            
-            <div className="text-sm text-muted-foreground">
-              <p>当前点击次数: {clickCount}</p>
+          <CardContent>
+            <div className="h-64 overflow-y-auto bg-gray-50 p-4 rounded">
+              {testResults.length === 0 ? (
+                <p className="text-gray-500">暂无测试结果</p>
+              ) : (
+                <div className="space-y-1">
+                  {testResults.map((result, index) => (
+                    <div key={index} className="text-sm font-mono">
+                      {result}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
+      </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Code className="h-5 w-5 text-orange-500" />
-              控制台错误测试
-            </CardTitle>
-            <CardDescription>
-              测试控制台错误捕获功能
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Button 
-              onClick={() => console.error('这是一个控制台错误测试')}
-              variant="outline"
-              className="w-full"
-            >
-              触发控制台错误
-            </Button>
-          </CardContent>
-        </Card>
-
+      <div className="mt-6">
         <Card>
           <CardHeader>
             <CardTitle>使用说明</CardTitle>
-            <CardDescription>
-              如何集成和使用埋点脚本
-            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-sm space-y-2">
-              <p><strong>1. 集成脚本</strong></p>
-              <pre className="bg-muted p-2 rounded text-xs">
-                {`<script src="http://localhost:3000/api/script"></script>`}
-              </pre>
-              
-              <p><strong>2. 测试功能</strong></p>
-              <ul className="list-disc list-inside space-y-1">
-                <li>点击"触发JavaScript异常"测试异常捕获</li>
-                <li>快速点击"点击我"按钮测试DOM快照</li>
-                <li>点击"触发控制台错误"测试控制台错误捕获</li>
-              </ul>
-              
-              <p><strong>3. 查看结果</strong></p>
-              <p>访问异常记录和DOM快照页面查看结果。</p>
+          <CardContent>
+            <div className="space-y-2 text-sm">
+              <p>1. 点击上方按钮测试不同类型的网络请求</p>
+              <p>2. 所有请求都会被RDebug脚本捕获并发送到服务器</p>
+              <p>3. 可以在 <a href="/network-requests" className="text-blue-600 hover:underline">网络请求页面</a> 查看捕获的数据</p>
+              <p>4. 注意：发送到 /api/ 的请求会被自动排除，避免循环</p>
             </div>
           </CardContent>
         </Card>

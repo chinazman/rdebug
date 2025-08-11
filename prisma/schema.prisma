@@ -34,4 +34,25 @@ model DomSnapshot {
 
   @@index([timestamp])
   @@index([sessionId])
+}
+
+model NetworkRequest {
+  id             String   @id @default(cuid())
+  url            String
+  method         String
+  status         Int?
+  statusText     String?
+  responseTime   Int?     // 响应时间（毫秒）
+  requestHeaders String?  @db.MediumText
+  responseHeaders String? @db.MediumText
+  requestBody    String?  @db.MediumText
+  responseBody   String?  @db.MediumText
+  error          String?  @db.MediumText
+  userAgent      String
+  sessionId      String
+  timestamp      DateTime @default(now())
+
+  @@index([timestamp])
+  @@index([sessionId])
+  @@index([url])
 } 

@@ -6,17 +6,19 @@
 
 ### 采集网站功能
 - 🚀 **现代化界面**: 使用 shadcn/ui 组件库，界面美观现代
-- 📊 **数据统计**: 实时显示异常记录、DOM快照、活跃会话等统计信息
-- 🔍 **数据查看**: 支持分页查看异常记录和DOM快照
-- 📝 **详细信息**: 查看异常堆栈、DOM结构等详细信息
+- 📊 **数据统计**: 实时显示异常记录、DOM快照、网络请求、活跃会话等统计信息
+- 🔍 **数据查看**: 支持分页查看异常记录、DOM快照和网络请求
+- 📝 **详细信息**: 查看异常堆栈、DOM结构、网络请求详情等详细信息
 - 🎯 **脚本生成**: 自动生成嵌入脚本，方便集成到业务网站
 
 ### 业务网站功能
 - ⚡ **异常捕获**: 自动捕获所有JavaScript异常和Promise拒绝
 - 🖱️ **快速点击检测**: 2秒内点击3次触发DOM快照
+- 🌐 **网络请求监控**: 自动捕获所有AJAX网络请求（fetch和XMLHttpRequest）
 - 📡 **数据发送**: 自动将数据发送到采集网站
 - 🔒 **会话管理**: 为每个用户生成唯一会话ID
 - 🛡️ **错误处理**: 完善的错误处理，不影响主站功能
+- 🔄 **循环防护**: 自动排除发送到采集网站的请求，避免循环
 
 ## 技术栈
 
@@ -74,6 +76,7 @@ npm run dev
 
 - **异常记录**: 访问 `/errors` 页面查看所有异常信息
 - **DOM快照**: 访问 `/snapshots` 页面查看DOM结构快照
+- **网络请求**: 访问 `/network-requests` 页面查看所有AJAX网络请求
 
 ### 3. 测试功能
 
@@ -90,6 +93,10 @@ npm run dev
 ### DOM快照
 - `POST /api/dom-snapshots` - 接收DOM快照
 - `GET /api/dom-snapshots` - 获取DOM快照列表（支持分页和筛选）
+
+### 网络请求
+- `POST /api/network-requests` - 接收网络请求数据
+- `GET /api/network-requests` - 获取网络请求列表（支持分页和筛选）
 
 ### 脚本生成
 - `GET /api/script` - 生成嵌入脚本
@@ -113,6 +120,22 @@ npm run dev
 - `timestamp`: 时间戳
 - `sessionId`: 会话ID
 - `clickCount`: 点击次数
+
+### NetworkRequest 表
+- `id`: 主键
+- `url`: 请求URL
+- `method`: 请求方法（GET、POST等）
+- `status`: 响应状态码
+- `statusText`: 响应状态文本
+- `responseTime`: 响应时间（毫秒）
+- `requestHeaders`: 请求头信息
+- `responseHeaders`: 响应头信息
+- `requestBody`: 请求体
+- `responseBody`: 响应体
+- `error`: 错误信息（如果有）
+- `userAgent`: 用户代理
+- `timestamp`: 时间戳
+- `sessionId`: 会话ID
 
 ## 开发命令
 

@@ -9,11 +9,12 @@ import { AlertTriangle, MousePointer, Code, Download } from 'lucide-react';
 interface Stats {
   errorCount: number;
   snapshotCount: number;
+  networkRequestCount: number;
   sessionCount: number;
 }
 
 export default function HomePage() {
-  const [stats, setStats] = useState<Stats>({ errorCount: 0, snapshotCount: 0, sessionCount: 0 });
+  const [stats, setStats] = useState<Stats>({ errorCount: 0, snapshotCount: 0, networkRequestCount: 0, sessionCount: 0 });
   const [serverUrl, setServerUrl] = useState('http://localhost:3000');
 
   useEffect(() => {
@@ -23,17 +24,20 @@ export default function HomePage() {
 
   const fetchStats = async () => {
     try {
-      const [errorsRes, snapshotsRes] = await Promise.all([
+      const [errorsRes, snapshotsRes, networkRequestsRes] = await Promise.all([
         fetch('/api/errors?limit=1'),
-        fetch('/api/dom-snapshots?limit=1')
+        fetch('/api/dom-snapshots?limit=1'),
+        fetch('/api/network-requests?limit=1')
       ]);
       
       const errorsData = await errorsRes.json();
       const snapshotsData = await snapshotsRes.json();
+      const networkRequestsData = await networkRequestsRes.json();
       
       setStats({
         errorCount: errorsData.pagination?.total || 0,
         snapshotCount: snapshotsData.pagination?.total || 0,
+        networkRequestCount: networkRequestsData.requests?.length || 0,
         sessionCount: 0 // 暂时设为0，后续可以添加会话统计
       });
     } catch (error) {
@@ -58,7 +62,7 @@ export default function HomePage() {
       </div>
 
       {/* 统计卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">异常记录</CardTitle>
@@ -83,6 +87,17 @@ export default function HomePage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">网络请求</CardTitle>
+            <Code className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.networkRequestCount}</div>
+            <p className="text-xs text-muted-foreground">总请求数量</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">活跃会话</CardTitle>
             <Code className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -99,6 +114,7 @@ export default function HomePage() {
           <TabsTrigger value="script">嵌入脚本</TabsTrigger>
           <TabsTrigger value="errors">异常记录</TabsTrigger>
           <TabsTrigger value="snapshots">DOM快照</TabsTrigger>
+          <TabsTrigger value="network">网络请求</TabsTrigger>
         </TabsList>
 
         <TabsContent value="script" className="space-y-4">
@@ -166,6 +182,22 @@ export default function HomePage() {
             <CardContent>
               <Button onClick={() => window.location.href = '/snapshots'}>
                 查看DOM快照
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="network" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>网络请求</CardTitle>
+              <CardDescription>
+                查看所有AJAX网络请求记录
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={() => window.location.href = '/network-requests'}>
+                查看网络请求
               </Button>
             </CardContent>
           </Card>
