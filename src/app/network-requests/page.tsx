@@ -237,7 +237,7 @@ export default function NetworkRequestsPage() {
             <TabsContent value="slow" className="mt-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>慢请求 (>1000ms)</CardTitle>
+                  <CardTitle>慢请求 (&gt;1000ms)</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {requests.filter(r => r.responseTime && r.responseTime > 1000).map((request) => (

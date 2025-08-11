@@ -14,10 +14,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <head>
-        {/* 使用国内CDN字体，如果加载失败会自动回退到系统字体 */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+        {/* 已移除 Google Fonts，默认使用系统中文字体族，避免在中国大陆加载失败 */}
       </head>
       <body className="font-sans">{children}</body>
     </html>
