@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { withCors } from '@/lib/cors';
+import { truncateString } from '@/lib/utils';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { url, message, stack, userAgent, sessionId } = body;
+    const safeUrl = truncateString(url, 255);
 
-    if (!url || !message || !userAgent || !sessionId) {
+    if (!safeUrl || !message || !userAgent || !sessionId) {
       return withCors(request, NextResponse.json(
         { error: '缺少必要参数' },
         { status: 400 }
@@ -16,7 +18,7 @@ export async function POST(request: NextRequest) {
 
     const errorLog = await prisma.errorLog.create({
       data: {
-        url,
+        url: safeUrl,
         message,
         stack: stack || null,
         userAgent,

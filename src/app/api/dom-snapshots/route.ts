@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { withCors } from '@/lib/cors';
+import { truncateString } from '@/lib/utils';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { url, domStructure, userAgent, sessionId, clickCount } = body;
+    const safeUrl = truncateString(url, 255);
 
-    if (!url || !domStructure || !userAgent || !sessionId || !clickCount) {
+    if (!safeUrl || !domStructure || !userAgent || !sessionId || !clickCount) {
       return withCors(request, NextResponse.json(
         { error: '缺少必要参数' },
         { status: 400 }
@@ -16,7 +18,7 @@ export async function POST(request: NextRequest) {
 
     const domSnapshot = await prisma.domSnapshot.create({
       data: {
-        url,
+        url: safeUrl,
         domStructure,
         userAgent,
         sessionId,

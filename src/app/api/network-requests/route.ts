@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withCors } from '@/lib/cors';
+import { truncateString } from '@/lib/utils';
 import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
+    const safeUrl = truncateString(data.url, 255);
     
     // 保存网络请求数据到数据库
     await prisma.networkRequest.create({
       data: {
-        url: data.url,
+        url: safeUrl,
         method: data.method,
         status: data.status,
         statusText: data.statusText,

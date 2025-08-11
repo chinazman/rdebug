@@ -61,6 +61,13 @@ export default function HomePage() {
         <p className="text-muted-foreground">简单的网站异常和DOM结构搜集系统</p>
       </div>
 
+      {/* 跳转到测试页面（新标签页打开） */}
+      <div className="mb-6">
+        <Button asChild variant="secondary">
+          <a href="/test" target="_blank" rel="noreferrer">打开测试页（新窗口）</a>
+        </Button>
+      </div>
+
       {/* 统计卡片 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card>
